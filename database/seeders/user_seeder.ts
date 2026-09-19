@@ -1,26 +1,9 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import User from '#models/user'
 import Company from '#models/company'
-import hash from '@adonisjs/core/services/hash'
 
 export default class extends BaseSeeder {
   async run() {
-    const hashedPassword = await hash.make('admin')
-
-    // 1. Super Administrador do Sistema (Acesso Master /admin)
-    await User.updateOrCreate(
-      { email: 'admin@sistema.com.br' },
-      {
-        fullName: 'Administrador Master',
-        email: 'admin@sistema.com.br',
-        password: hashedPassword,
-        crefito: 'ADMIN-MASTER',
-        role: 'superadmin',
-        active: true,
-      }
-    )
-
-    // 2. Empresa / Clínica Padrão de Exemplo
     const defaultCompany = await Company.updateOrCreate(
       { name: 'Clínica Fisioterapia FisMovie' },
       {
@@ -34,18 +17,40 @@ export default class extends BaseSeeder {
       }
     )
 
-    // 3. Usuário Administrador da Clínica (Dra. Milene)
-    await User.updateOrCreate(
-      { email: 'milene@crefito.com.br' },
-      {
+    let admin = await User.findBy('email', 'admin@sistema.com.br')
+    if (admin) {
+      admin.password = 'admin'
+      admin.role = 'superadmin'
+      admin.active = true
+      await admin.save()
+    } else {
+      await User.create({
+        fullName: 'Administrador Master',
+        email: 'admin@sistema.com.br',
+        password: 'admin',
+        crefito: 'ADMIN-MASTER',
+        role: 'superadmin',
+        active: true,
+      })
+    }
+
+    let milene = await User.findBy('email', 'milene@crefito.com.br')
+    if (milene) {
+      milene.password = 'admin'
+      milene.role = 'clinic_admin'
+      milene.companyId = defaultCompany.id
+      milene.active = true
+      await milene.save()
+    } else {
+      await User.create({
         fullName: 'Dra. Milene Salmazo',
         email: 'milene@crefito.com.br',
         crefito: '123456-F',
-        password: hashedPassword,
+        password: 'admin',
         role: 'clinic_admin',
         companyId: defaultCompany.id,
         active: true,
-      }
-    )
+      })
+    }
   }
 }

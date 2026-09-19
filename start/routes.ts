@@ -25,11 +25,8 @@ router
 
     // Initial database seeding trigger endpoint
     router.get('system-init-seed', async () => {
-      const hashService = await import('@adonisjs/core/services/hash')
       const User = (await import('#models/user')).default
       const Company = (await import('#models/company')).default
-
-      const hashedPassword = await hashService.default.make('admin')
 
       const company = await Company.updateOrCreate(
         { name: 'Clínica Fisioterapia FisMovie' },
@@ -44,30 +41,41 @@ router
         }
       )
 
-      await User.updateOrCreate(
-        { email: 'admin@sistema.com.br' },
-        {
+      let admin = await User.findBy('email', 'admin@sistema.com.br')
+      if (admin) {
+        admin.password = 'admin'
+        admin.role = 'superadmin'
+        admin.active = true
+        await admin.save()
+      } else {
+        admin = await User.create({
           fullName: 'Administrador Master',
           email: 'admin@sistema.com.br',
-          password: hashedPassword,
+          password: 'admin',
           crefito: 'ADMIN-MASTER',
           role: 'superadmin',
           active: true,
-        }
-      )
+        })
+      }
 
-      await User.updateOrCreate(
-        { email: 'milene@crefito.com.br' },
-        {
+      let milene = await User.findBy('email', 'milene@crefito.com.br')
+      if (milene) {
+        milene.password = 'admin'
+        milene.role = 'clinic_admin'
+        milene.companyId = company.id
+        milene.active = true
+        await milene.save()
+      } else {
+        milene = await User.create({
           fullName: 'Dra. Milene Salmazo',
           email: 'milene@crefito.com.br',
           crefito: '123456-F',
-          password: hashedPassword,
+          password: 'admin',
           role: 'clinic_admin',
           companyId: company.id,
           active: true,
-        }
-      )
+        })
+      }
 
       return { success: true, message: 'Seeds executados com sucesso no banco de dados!' }
     })
