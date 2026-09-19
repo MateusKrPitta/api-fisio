@@ -4,14 +4,19 @@ import { defineConfig } from '@adonisjs/lucid'
 
 const dbUrl =
   env.get('DATABASE_URL') ||
+  process.env.DATABASE_URL ||
   env.get('DATABASE_PRIVATE_URL') ||
-  env.get('DATABASE_PUBLIC_URL')
+  process.env.DATABASE_PRIVATE_URL ||
+  env.get('DATABASE_PUBLIC_URL') ||
+  process.env.DATABASE_PUBLIC_URL
 
-const hasPgEnv =
-  Boolean(dbUrl) ||
-  Boolean(env.get('PGHOST')) ||
-  Boolean(env.get('POSTGRES_USER')) ||
-  Boolean(env.get('DB_USER'))
+const pgHost = env.get('DB_HOST') || env.get('PGHOST') || process.env.PGHOST || process.env.DB_HOST
+const pgPort = Number(env.get('DB_PORT') || env.get('PGPORT') || process.env.PGPORT || 5432)
+const pgUser = env.get('DB_USER') || env.get('PGUSER') || env.get('POSTGRES_USER') || process.env.PGUSER || process.env.POSTGRES_USER
+const pgPassword = env.get('DB_PASSWORD') || env.get('PGPASSWORD') || env.get('POSTGRES_PASSWORD') || process.env.PGPASSWORD || process.env.POSTGRES_PASSWORD
+const pgDatabase = env.get('DB_DATABASE') || env.get('PGDATABASE') || env.get('POSTGRES_DB') || process.env.PGDATABASE || process.env.POSTGRES_DB
+
+const hasPgEnv = Boolean(dbUrl) || Boolean(pgHost) || Boolean(pgUser)
 
 const defaultConnection =
   env.get('DB_CONNECTION') || (app.inProduction || hasPgEnv ? 'pg' : 'sqlite')
@@ -71,11 +76,11 @@ const dbConfig = defineConfig({
       connection: dbUrl
         ? dbUrl
         : {
-            host: env.get('DB_HOST') || env.get('PGHOST') || '127.0.0.1',
-            port: Number(env.get('DB_PORT') || env.get('PGPORT') || 5432),
-            user: env.get('DB_USER') || env.get('PGUSER') || env.get('POSTGRES_USER') || 'postgres',
-            password: env.get('DB_PASSWORD') || env.get('PGPASSWORD') || env.get('POSTGRES_PASSWORD') || '',
-            database: env.get('DB_DATABASE') || env.get('PGDATABASE') || env.get('POSTGRES_DB') || 'railway',
+            host: pgHost || '127.0.0.1',
+            port: pgPort,
+            user: pgUser || 'postgres',
+            password: pgPassword || '',
+            database: pgDatabase || 'railway',
           },
       migrations: {
         naturalSort: true,
