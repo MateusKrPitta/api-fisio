@@ -18,12 +18,12 @@ const loggerConfig = defineConfig({
       /**
        * Logger name shown in log records.
        */
-      name: env.get('APP_NAME'),
+      name: env.get('APP_NAME') || 'api-fisio',
 
       /**
        * Minimum level to output (trace, debug, info, warn, error, fatal).
        */
-      level: env.get('LOG_LEVEL'),
+      level: env.get('LOG_LEVEL') || 'info',
 
       /**
        * Use sync destination in non-production for immediate flush.
