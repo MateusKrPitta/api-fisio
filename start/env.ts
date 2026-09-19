@@ -19,7 +19,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   LOG_LEVEL: Env.schema.string.optional(),
 
   // App
-  APP_KEY: Env.schema.secret(),
+  APP_KEY: Env.schema.string.optional(),
   APP_URL: Env.schema.string.optional(),
 
   // Session

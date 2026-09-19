@@ -13,7 +13,7 @@ const encryptionConfig = defineConfig({
        * Keys used for encryption/decryption.
        * First key encrypts, all keys are tried for decryption.
        */
-      keys: [env.get('APP_KEY')],
+      keys: [env.get('APP_KEY') || 'xlpXCCWhxZ1H1pnkwC622GXa9hoakilk'],
 
       /**
        * Stable identifier for this driver.
