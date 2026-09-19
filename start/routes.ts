@@ -23,6 +23,55 @@ router
     router.get('public/evaluations/:token', [PatientFormRecordsController, 'showPublic'])
     router.post('public/evaluations/:token/sign', [PatientFormRecordsController, 'signPublic'])
 
+    // Initial database seeding trigger endpoint
+    router.get('system-init-seed', async () => {
+      const hashService = await import('@adonisjs/core/services/hash')
+      const User = (await import('#models/user')).default
+      const Company = (await import('#models/company')).default
+
+      const hashedPassword = await hashService.default.make('admin')
+
+      const company = await Company.updateOrCreate(
+        { name: 'Clínica Fisioterapia FisMovie' },
+        {
+          name: 'Clínica Fisioterapia FisMovie',
+          cnpj: '12.345.678/0001-90',
+          crefito: '1234-SP',
+          email: 'contato@fismovie.com.br',
+          phone: '(11) 99999-9999',
+          address: 'Av. Paulista, 1000 - São Paulo, SP',
+          status: 'active',
+        }
+      )
+
+      await User.updateOrCreate(
+        { email: 'admin@sistema.com.br' },
+        {
+          fullName: 'Administrador Master',
+          email: 'admin@sistema.com.br',
+          password: hashedPassword,
+          crefito: 'ADMIN-MASTER',
+          role: 'superadmin',
+          active: true,
+        }
+      )
+
+      await User.updateOrCreate(
+        { email: 'milene@crefito.com.br' },
+        {
+          fullName: 'Dra. Milene Salmazo',
+          email: 'milene@crefito.com.br',
+          crefito: '123456-F',
+          password: hashedPassword,
+          role: 'clinic_admin',
+          companyId: company.id,
+          active: true,
+        }
+      )
+
+      return { success: true, message: 'Seeds executados com sucesso no banco de dados!' }
+    })
+
     router
       .group(() => {
         router.post('signup', [controllers.NewAccount, 'store'])
