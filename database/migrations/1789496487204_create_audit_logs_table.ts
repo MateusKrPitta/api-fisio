@@ -4,7 +4,7 @@ export default class extends BaseSchema {
   protected tableName = 'audit_logs'
 
   async up() {
-    this.schema.createTable(this.tableName, (table) => {
+    this.schema.createTableIfNotExists(this.tableName, (table) => {
       table.increments('id')
       table.integer('user_id').unsigned().references('id').inTable('users').onDelete('SET NULL')
       table.integer('company_id').unsigned().references('id').inTable('companies').onDelete('SET NULL')

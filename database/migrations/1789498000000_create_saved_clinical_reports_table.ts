@@ -4,7 +4,7 @@ export default class extends BaseSchema {
   protected tableName = 'saved_clinical_reports'
 
   async up() {
-    this.schema.createTable(this.tableName, (table) => {
+    this.schema.createTableIfNotExists(this.tableName, (table) => {
       table.increments('id').notNullable()
       table
         .integer('user_id')

@@ -4,7 +4,7 @@ export default class extends BaseSchema {
   protected tableName = 'patient_form_records'
 
   async up() {
-    this.schema.createTable(this.tableName, (table) => {
+    this.schema.createTableIfNotExists(this.tableName, (table) => {
       table.increments('id').notNullable()
       table
         .integer('patient_id')
