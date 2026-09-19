@@ -2,13 +2,25 @@ import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/lucid'
 
+const dbUrl =
+  env.get('DATABASE_URL') ||
+  env.get('DATABASE_PRIVATE_URL') ||
+  env.get('DATABASE_PUBLIC_URL')
+
+const hasPgEnv =
+  Boolean(dbUrl) ||
+  Boolean(env.get('PGHOST')) ||
+  Boolean(env.get('POSTGRES_USER')) ||
+  Boolean(env.get('DB_USER'))
+
+const defaultConnection =
+  env.get('DB_CONNECTION') || (app.inProduction || hasPgEnv ? 'pg' : 'sqlite')
+
 const dbConfig = defineConfig({
   /**
    * Default connection used for all queries.
    */
-  connection:
-    env.get('DB_CONNECTION') ||
-    (env.get('DATABASE_URL') || env.get('PGHOST') || env.get('POSTGRES_USER') ? 'pg' : 'sqlite'),
+  connection: defaultConnection,
 
   connections: {
     /**
@@ -56,8 +68,8 @@ const dbConfig = defineConfig({
      */
     pg: {
       client: 'pg',
-      connection: env.get('DATABASE_URL')
-        ? env.get('DATABASE_URL')
+      connection: dbUrl
+        ? dbUrl
         : {
             host: env.get('DB_HOST') || env.get('PGHOST') || '127.0.0.1',
             port: Number(env.get('DB_PORT') || env.get('PGPORT') || 5432),

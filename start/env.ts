@@ -28,6 +28,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   // Database
   DB_CONNECTION: Env.schema.enum.optional(['sqlite', 'pg'] as const),
   DATABASE_URL: Env.schema.string.optional(),
+  DATABASE_PRIVATE_URL: Env.schema.string.optional(),
+  DATABASE_PUBLIC_URL: Env.schema.string.optional(),
   DB_HOST: Env.schema.string.optional(),
   DB_PORT: Env.schema.number.optional(),
   DB_USER: Env.schema.string.optional(),
