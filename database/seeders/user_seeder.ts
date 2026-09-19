@@ -1,16 +1,19 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import User from '#models/user'
 import Company from '#models/company'
+import hash from '@adonisjs/core/services/hash'
 
 export default class extends BaseSeeder {
   async run() {
+    const hashedPassword = await hash.make('admin')
+
     // 1. Super Administrador do Sistema (Acesso Master /admin)
     await User.updateOrCreate(
       { email: 'admin@sistema.com.br' },
       {
         fullName: 'Administrador Master',
         email: 'admin@sistema.com.br',
-        password: 'admin',
+        password: hashedPassword,
         crefito: 'ADMIN-MASTER',
         role: 'superadmin',
         active: true,
@@ -38,7 +41,7 @@ export default class extends BaseSeeder {
         fullName: 'Dra. Milene Salmazo',
         email: 'milene@crefito.com.br',
         crefito: '123456-F',
-        password: 'admin',
+        password: hashedPassword,
         role: 'clinic_admin',
         companyId: defaultCompany.id,
         active: true,
