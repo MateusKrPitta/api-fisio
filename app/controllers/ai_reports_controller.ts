@@ -199,7 +199,8 @@ export default class AiReportsController {
     const query = SavedClinicalReport.query().where('id', params.id)
     if (user.role !== 'superadmin') {
       if (user.companyId) {
-        query.where((q) => q.where('company_id', user.companyId).orWhere('user_id', user.id))
+        const companyId = user.companyId
+        query.where((q) => q.where('company_id', companyId).orWhere('user_id', user.id))
       } else {
         query.where('user_id', user.id)
       }
