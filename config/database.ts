@@ -6,11 +6,13 @@ const dbConfig = defineConfig({
   /**
    * Default connection used for all queries.
    */
-  connection: env.get('DB_CONNECTION') || 'sqlite',
+  connection:
+    env.get('DB_CONNECTION') ||
+    (env.get('DATABASE_URL') || env.get('PGHOST') || env.get('POSTGRES_USER') ? 'pg' : 'sqlite'),
 
   connections: {
     /**
-     * SQLite connection (default).
+     * SQLite connection (default in local dev without postgres).
      */
     sqlite: {
       client: 'better-sqlite3',
@@ -50,18 +52,19 @@ const dbConfig = defineConfig({
     },
 
     /**
-     * PostgreSQL connection.
-     * Install package to switch: npm install pg
+     * PostgreSQL connection (Railway / Production).
      */
     pg: {
       client: 'pg',
-      connection: {
-        host: env.get('DB_HOST'),
-        port: env.get('DB_PORT'),
-        user: env.get('DB_USER'),
-        password: env.get('DB_PASSWORD'),
-        database: env.get('DB_DATABASE'),
-      },
+      connection: env.get('DATABASE_URL')
+        ? env.get('DATABASE_URL')
+        : {
+            host: env.get('DB_HOST') || env.get('PGHOST') || '127.0.0.1',
+            port: Number(env.get('DB_PORT') || env.get('PGPORT') || 5432),
+            user: env.get('DB_USER') || env.get('PGUSER') || env.get('POSTGRES_USER') || 'postgres',
+            password: env.get('DB_PASSWORD') || env.get('PGPASSWORD') || env.get('POSTGRES_PASSWORD') || '',
+            database: env.get('DB_DATABASE') || env.get('PGDATABASE') || env.get('POSTGRES_DB') || 'railway',
+          },
       migrations: {
         naturalSort: true,
         paths: ['database/migrations'],
