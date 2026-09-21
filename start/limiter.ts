@@ -12,7 +12,8 @@
 import limiter from '@adonisjs/limiter/services/main'
 
 export const loginLimiter = limiter.define('login', (ctx) => {
-  return limiter.allowRequests(5).every('1 minute').usingKey(ctx.request.ip())
+  const isDev = process.env.NODE_ENV !== 'production'
+  return limiter.allowRequests(isDev ? 50 : 15).every('1 minute').usingKey(ctx.request.ip())
 })
 
 export const signupLimiter = limiter.define('signup', (ctx) => {
