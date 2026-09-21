@@ -10,7 +10,7 @@
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
-import { loginLimiter } from '#start/limiter'
+import { loginLimiter, signupLimiter, publicSignatureLimiter } from '#start/limiter'
 
 router.get('/', () => {
   return { hello: 'world' }
@@ -21,10 +21,20 @@ router
     // Public evaluation preview & digital signature endpoints (no login required)
     const PatientFormRecordsController = () => import('#controllers/patient_form_records_controller')
     router.get('public/evaluations/:token', [PatientFormRecordsController, 'showPublic'])
-    router.post('public/evaluations/:token/sign', [PatientFormRecordsController, 'signPublic'])
+    router.post('public/evaluations/:token/sign', [PatientFormRecordsController, 'signPublic']).use(publicSignatureLimiter)
 
-    // Initial database seeding trigger endpoint
-    router.get('system-init-seed', async () => {
+    // Initial database seeding trigger endpoint (Protected: dev only or with secret key)
+    router.get('system-init-seed', async ({ request, response }) => {
+      const isDev = process.env.NODE_ENV !== 'production'
+      const secretKey = process.env.SEED_SECRET_KEY
+      const providedKey = request.header('x-seed-key') || request.input('key')
+
+      if (!isDev && (!secretKey || providedKey !== secretKey)) {
+        return response.status(403).json({
+          error: 'Acesso negado. A rota de inicialização do sistema está protegida.',
+        })
+      }
+
       const User = (await import('#models/user')).default
       const Company = (await import('#models/company')).default
 
@@ -82,7 +92,7 @@ router
 
     router
       .group(() => {
-        router.post('signup', [controllers.NewAccount, 'store'])
+        router.post('signup', [controllers.NewAccount, 'store']).use(signupLimiter)
         router.post('login', [controllers.AccessTokens, 'store']).use(loginLimiter)
       })
       .prefix('auth')
@@ -111,6 +121,7 @@ router
         router.get('birthdays', [PatientsController, 'birthdays'])
         router.get('patients', [PatientsController, 'index'])
         router.get('patients/:id', [PatientsController, 'show'])
+        router.get('patients/:id/evolutions', [PatientsController, 'evolutions'])
         router.post('patients', [PatientsController, 'store'])
         router.put('patients/:id', [PatientsController, 'update'])
         router.delete('patients/:id', [PatientsController, 'destroy'])

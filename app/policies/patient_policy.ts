@@ -11,9 +11,13 @@ export default class PatientPolicy extends BasePolicy {
   }
 
   view(user: User, patient: Patient): AuthorizerResponse {
-    if (user.companyId) {
-      return patient.companyId === user.companyId || patient.userId === user.id
+    if (user.role === 'superadmin') {
+      return true
     }
+    if (user.role === 'clinic_admin' || user.role === 'secretary') {
+      return user.companyId ? patient.companyId === user.companyId : patient.userId === user.id
+    }
+    // Fisioterapeuta só acessa pacientes vinculados a ele
     return patient.userId === user.id
   }
 
@@ -22,6 +26,9 @@ export default class PatientPolicy extends BasePolicy {
   }
 
   delete(user: User, patient: Patient): AuthorizerResponse {
+    if (user.role === 'secretary') {
+      return false
+    }
     return this.view(user, patient)
   }
 }

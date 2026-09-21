@@ -2,6 +2,7 @@ import User from '#models/user'
 import Company from '#models/company'
 import { loginValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
+import AuditService from '#services/audit_service'
 
 export default class AccessTokensController {
   async store({ request, response }: HttpContext) {
@@ -27,7 +28,9 @@ export default class AccessTokensController {
       }
     }
 
-    const token = await User.accessTokens.create(user)
+    const token = await User.accessTokens.create(user, ['*'], {
+      expiresIn: '10 hours',
+    })
 
     const userJson = {
       id: user.id,
@@ -58,6 +61,15 @@ export default class AccessTokensController {
         : null,
     }
 
+    await AuditService.log({
+      userId: user.id,
+      companyId: user.companyId,
+      action: 'LOGIN',
+      tableName: 'users',
+      recordId: user.id,
+      newData: { ip: request.ip(), userAgent: request.header('user-agent') },
+    })
+
     return response.json({
       message: `Seja bem-vindo(a), ${user.fullName || user.email}!`,
       user: userJson,
@@ -65,11 +77,20 @@ export default class AccessTokensController {
     })
   }
 
-  async destroy({ auth }: HttpContext) {
+  async destroy({ auth, request }: HttpContext) {
     const user = auth.getUserOrFail()
     if (user.currentAccessToken) {
       await User.accessTokens.delete(user, user.currentAccessToken.identifier)
     }
+
+    await AuditService.log({
+      userId: user.id,
+      companyId: user.companyId,
+      action: 'LOGOUT',
+      tableName: 'users',
+      recordId: user.id,
+      newData: { ip: request.ip() },
+    })
 
     return {
       message: 'Sessão encerrada com sucesso.',

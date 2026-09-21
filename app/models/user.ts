@@ -10,7 +10,9 @@ import Appointment from '#models/appointment'
 import Company from '#models/company'
 
 export default class User extends compose(UserSchema, withAuthFinder(hash)) {
-  static accessTokens = DbAccessTokensProvider.forModel(User)
+  static accessTokens = DbAccessTokensProvider.forModel(User, {
+    expiresIn: '10 hours',
+  })
   declare currentAccessToken?: AccessToken
 
   @belongsTo(() => Company)

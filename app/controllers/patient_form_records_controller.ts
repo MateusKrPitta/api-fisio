@@ -3,6 +3,7 @@ import PatientFormRecord from '#models/patient_form_record'
 import Patient from '#models/patient'
 import { DateTime } from 'luxon'
 import crypto from 'node:crypto'
+import AuditService from '#services/audit_service'
 
 export default class PatientFormRecordsController {
   private async getPatientScoped(patientId: number | string, user: any) {
@@ -23,28 +24,37 @@ export default class PatientFormRecordsController {
   /**
    * List all filled form records for a specific patient
    */
-  async index({ auth, params, response }: HttpContext) {
+  async index({ auth, params, request, response }: HttpContext) {
     const user = auth.getUserOrFail()
     const patient = await this.getPatientScoped(params.patientId, user)
     if (!patient) {
       return response.notFound({ error: 'Paciente não encontrado.' })
     }
 
-    const records = await PatientFormRecord.query()
+    const startDate = request.input('startDate') || request.input('start_date')
+    const endDate = request.input('endDate') || request.input('end_date')
+    const templateId = request.input('templateId') || request.input('template_id')
+
+    const query = PatientFormRecord.query()
       .where('patient_id', params.patientId)
       .preload('template')
-      .preload('user')
+      .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email'))
       .orderBy('record_date', 'desc')
       .orderBy('id', 'desc')
 
-    // Ensure all records have a signature token for convenience
-    for (const r of records) {
-      if (!r.signatureToken) {
-        r.signatureToken = crypto.randomUUID()
-        r.signatureStatus = r.signatureStatus || 'pendente'
-        await r.save()
-      }
+    if (startDate && endDate) {
+      query.whereBetween('record_date', [startDate, endDate])
+    } else if (startDate) {
+      query.where('record_date', '>=', startDate)
+    } else if (endDate) {
+      query.where('record_date', '<=', endDate)
     }
+
+    if (templateId) {
+      query.where('template_id', templateId)
+    }
+
+    const records = await query
 
     // Collect all module IDs across records
     const allModuleIds = new Set<number>()
@@ -413,6 +423,19 @@ export default class PatientFormRecordsController {
     record.signedByCpf = signedByCpf?.trim() || record.patient?.cpf || null
 
     await record.save()
+
+    await AuditService.log({
+      userId: record.userId,
+      companyId: record.patient?.companyId || null,
+      action: 'SIGN',
+      tableName: 'patient_form_records',
+      recordId: record.id,
+      newData: {
+        signedByName: record.signedByName,
+        signedByCpf: record.signedByCpf,
+        ip: request.ip(),
+      },
+    })
 
     return response.ok({
       success: true,

@@ -15,6 +15,14 @@ export const loginLimiter = limiter.define('login', (ctx) => {
   return limiter.allowRequests(5).every('1 minute').usingKey(ctx.request.ip())
 })
 
+export const signupLimiter = limiter.define('signup', (ctx) => {
+  return limiter.allowRequests(5).every('15 minutes').usingKey(ctx.request.ip())
+})
+
+export const publicSignatureLimiter = limiter.define('public_signature', (ctx) => {
+  return limiter.allowRequests(10).every('1 minute').usingKey(ctx.request.ip())
+})
+
 export const whatsappLimiter = limiter.define('whatsapp', (ctx) => {
   return limiter.allowRequests(10).every('1 minute').usingKey(ctx.request.ip())
 })

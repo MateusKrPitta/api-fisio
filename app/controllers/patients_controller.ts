@@ -5,6 +5,7 @@ import FinancialRecord from '#models/financial_record'
 import { createPatientValidator, updatePatientValidator } from '#validators/patient'
 import { DateTime } from 'luxon'
 import PatientPolicy from '#policies/patient_policy'
+import AuditService from '#services/audit_service'
 
 function checkTimeOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
   const eA = endA && endA > startA ? endA : startA
@@ -18,11 +19,12 @@ export default class PatientsController {
     if (user.role === 'superadmin') {
       return query
     }
-    if (user.companyId) {
-      return query.where((q: any) => {
-        q.where('company_id', user.companyId).orWhere('user_id', user.id)
-      })
+    if (user.role === 'clinic_admin' || user.role === 'secretary') {
+      if (user.companyId) {
+        return query.where('company_id', user.companyId)
+      }
     }
+    // Fisioterapeuta só acessa pacientes vinculados a ele
     return query.where('user_id', user.id)
   }
 
@@ -75,6 +77,116 @@ export default class PatientsController {
     await bouncer.with(PatientPolicy).authorize('view', patient)
 
     return patient
+  }
+
+  /**
+   * Get paginated evolutions / appointments for a patient with status filter (all, pending, completed).
+   */
+  async evolutions({ auth, params, request, response }: HttpContext) {
+    const user = auth.getUserOrFail()
+
+    // Secretária não tem acesso ao módulo de evoluções
+    if (user.role === 'secretary') {
+      return response.forbidden({ error: 'Secretárias não têm permissão para acessar o módulo de evoluções.' })
+    }
+
+    const patientId = params.id
+    const page = Number(request.input('page', 1)) || 1
+    const limit = Number(request.input('limit', 5)) || 5
+    const status = String(request.input('status', 'all')).toLowerCase() // 'all' | 'pending' | 'completed'
+
+    const patientQuery = Patient.query().where('id', patientId)
+    this.applyScope(patientQuery, user)
+    const patient = await patientQuery.first()
+
+    if (!patient) {
+      return response.notFound({ error: 'Paciente não encontrado.' })
+    }
+
+    const completedCondition = (q: any) => {
+      q.where((sub: any) => {
+        sub.whereNotNull('notes')
+          .whereRaw("LENGTH(TRIM(notes)) > 0")
+          .where((nSub: any) => {
+            nSub.whereRaw("notes NOT LIKE 'Sessão %'")
+              .orWhereRaw("LENGTH(TRIM(notes)) > 40")
+          })
+      }).orWhere((sub: any) => {
+        sub.whereNotNull('images')
+          .whereRaw("images != '[]'")
+          .whereRaw("images != ''")
+      })
+    }
+
+    // Get total counts
+    const allCountQuery = Appointment.query().where('patient_id', patientId)
+    const completedCountQuery = Appointment.query().where('patient_id', patientId).where(completedCondition)
+
+    const [totalCountResult, completedCountResult] = await Promise.all([
+      allCountQuery.count('* as total'),
+      completedCountQuery.count('* as total'),
+    ])
+
+    const totalCount = Number(totalCountResult[0]?.$extras?.total || 0)
+    const completedCount = Number(completedCountResult[0]?.$extras?.total || 0)
+    const pendingCount = Math.max(0, totalCount - completedCount)
+
+    // Query for paginated list
+    const query = Appointment.query()
+      .where('patient_id', patientId)
+      .orderBy('date', 'asc')
+      .orderBy('start_time', 'asc')
+
+    if (status === 'completed') {
+      query.where(completedCondition)
+    } else if (status === 'pending') {
+      query.whereNot(completedCondition)
+    }
+
+    const paginated = await query.paginate(page, limit)
+
+    const isEvolutionCheck = (notes?: string | null, images?: any) => {
+      if (Array.isArray(images) && images.length > 0) return true
+      if (typeof images === 'string' && images !== '[]' && images.trim() !== '') return true
+      if (!notes || typeof notes !== 'string' || notes.trim() === '') return false
+      const clean = notes.trim()
+      if (clean.startsWith('Sessão ') && (clean.includes('Recorrente') || clean.includes('Inicial') || clean.includes('Mensal') || clean.length < 40)) {
+        return false
+      }
+      return true
+    }
+
+    return {
+      patient: {
+        id: patient.id,
+        name: patient.name,
+        fullName: patient.name,
+        phone: patient.phone,
+        cpf: patient.cpf,
+      },
+      counts: {
+        total: totalCount,
+        completed: completedCount,
+        pending: pendingCount,
+      },
+      data: paginated.all().map((a) => {
+        const hasEvol = isEvolutionCheck(a.notes, a.images)
+        return {
+          id: a.id,
+          patientId: a.patientId,
+          date: a.date ? (typeof a.date === 'string' ? a.date : a.date.toISODate()) : '',
+          startTime: a.startTime,
+          endTime: a.endTime,
+          specialty: a.specialty,
+          status: a.status,
+          notes: a.notes,
+          images: a.images || [],
+          hasEvolution: hasEvol,
+          has_evolution: hasEvol,
+        }
+      }),
+      meta: paginated.getMeta(),
+    }
   }
 
   /**
@@ -328,6 +440,15 @@ export default class PatientsController {
     }
 
     await bouncer.with(PatientPolicy).authorize('delete', patient)
+
+    await AuditService.log({
+      userId: user.id,
+      companyId: user.companyId,
+      action: 'DELETE',
+      tableName: 'patients',
+      recordId: patient.id,
+      oldData: { name: patient.name, cpf: patient.cpf },
+    })
 
     await patient.delete()
     return response.noContent()
