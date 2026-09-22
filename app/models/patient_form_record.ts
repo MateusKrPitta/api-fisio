@@ -27,6 +27,21 @@ export default class PatientFormRecord extends BaseModel {
   @column()
   declare notes: string | null
 
+  @column({
+    prepare: (value: any) => (value ? (typeof value === 'string' ? value : JSON.stringify(value)) : null),
+    consume: (value: any) => {
+      if (!value) return []
+      if (Array.isArray(value)) return value
+      try {
+        const parsed = JSON.parse(value)
+        return Array.isArray(parsed) ? parsed : [parsed]
+      } catch {
+        return typeof value === 'string' && value.trim() ? [value] : []
+      }
+    },
+  })
+  declare images: string[] | null
+
   @column()
   declare signatureStatus: string // 'pendente' | 'assinado'
 

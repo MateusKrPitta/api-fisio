@@ -164,11 +164,12 @@ export default class PatientFormRecordsController {
       return response.notFound({ error: 'Paciente não encontrado.' })
     }
 
-    const { templateId, recordDate, answers, notes } = request.only([
+    const { templateId, recordDate, answers, notes, images } = request.only([
       'templateId',
       'recordDate',
       'answers',
       'notes',
+      'images',
     ])
 
     if (!answers) {
@@ -185,6 +186,7 @@ export default class PatientFormRecordsController {
       recordDate: rDate,
       answers: typeof answers === 'object' ? JSON.stringify(answers) : answers,
       notes: notes || null,
+      images: images || [],
       signatureStatus: 'pendente',
       signatureToken,
       signatureImage: null,
@@ -237,11 +239,12 @@ export default class PatientFormRecordsController {
       return response.forbidden({ error: 'Acesso não autorizado a este registro.' })
     }
 
-    const { templateId, recordDate, answers, notes, signatureStatus, signatureImage, signedByName, signedByCpf } = request.only([
+    const { templateId, recordDate, answers, notes, images, signatureStatus, signatureImage, signedByName, signedByCpf } = request.only([
       'templateId',
       'recordDate',
       'answers',
       'notes',
+      'images',
       'signatureStatus',
       'signatureImage',
       'signedByName',
@@ -259,6 +262,9 @@ export default class PatientFormRecordsController {
     }
     if (notes !== undefined) {
       record.notes = notes || null
+    }
+    if (images !== undefined) {
+      record.images = images || []
     }
     if (signatureStatus !== undefined) {
       record.signatureStatus = signatureStatus
@@ -364,6 +370,7 @@ export default class PatientFormRecordsController {
       signedByName: record.signedByName,
       signedByCpf: record.signedByCpf,
       notes: record.notes,
+      images: record.images || [],
       patient: record.patient ? {
         id: record.patient.id,
         name: record.patient.name,

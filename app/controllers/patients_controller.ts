@@ -21,8 +21,11 @@ export default class PatientsController {
     }
     if (user.role === 'clinic_admin' || user.role === 'secretary') {
       if (user.companyId) {
-        return query.where('company_id', user.companyId)
+        return query.where((q: any) => {
+          q.where('company_id', user.companyId).orWhere('user_id', user.id)
+        })
       }
+      return query.where('user_id', user.id)
     }
     // Fisioterapeuta só acessa pacientes vinculados a ele
     return query.where('user_id', user.id)

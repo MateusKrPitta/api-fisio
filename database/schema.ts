@@ -245,7 +245,7 @@ export class FormTemplateSchema extends BaseModel {
 }
 
 export class PatientFormRecordSchema extends BaseModel {
-  static $columns = ['answers', 'createdAt', 'id', 'notes', 'patientId', 'recordDate', 'signatureImage', 'signatureStatus', 'signatureToken', 'signedAt', 'signedByCpf', 'signedByName', 'templateId', 'updatedAt', 'userId'] as const
+  static $columns = ['answers', 'createdAt', 'id', 'images', 'notes', 'patientId', 'recordDate', 'signatureImage', 'signatureStatus', 'signatureToken', 'signedAt', 'signedByCpf', 'signedByName', 'templateId', 'updatedAt', 'userId'] as const
   $columns = PatientFormRecordSchema.$columns
   @column()
   declare answers: string
@@ -253,6 +253,8 @@ export class PatientFormRecordSchema extends BaseModel {
   declare createdAt: DateTime
   @column({ isPrimary: true })
   declare id: number
+  @column()
+  declare images: string | null
   @column()
   declare notes: string | null
   @column()
