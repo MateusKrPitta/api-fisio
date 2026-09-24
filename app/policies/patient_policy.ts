@@ -15,9 +15,12 @@ export default class PatientPolicy extends BasePolicy {
       return true
     }
     if (user.role === 'clinic_admin' || user.role === 'secretary') {
-      return user.companyId ? patient.companyId === user.companyId : patient.userId === user.id
+      if (user.companyId) {
+        return patient.companyId === user.companyId || patient.userId === user.id
+      }
+      return patient.userId === user.id
     }
-    // Fisioterapeuta só acessa pacientes vinculados a ele
+    // Fisioterapeuta acessa se o paciente estiver atribuído a ele
     return patient.userId === user.id
   }
 

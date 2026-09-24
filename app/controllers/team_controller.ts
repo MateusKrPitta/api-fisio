@@ -15,6 +15,16 @@ export default class TeamController {
       phone: user.phone,
       avatarUrl: user.avatarUrl,
       active: user.active !== false,
+      compensationType: user.compensationType || null,
+      baseSalary: user.baseSalary !== null && user.baseSalary !== undefined ? Number(user.baseSalary) : null,
+      sessionRate: user.sessionRate !== null && user.sessionRate !== undefined ? Number(user.sessionRate) : null,
+      commissionPercentage:
+        user.commissionPercentage !== null && user.commissionPercentage !== undefined
+          ? Number(user.commissionPercentage)
+          : null,
+      paymentDay: user.paymentDay || null,
+      pixKey: user.pixKey || null,
+      bankInfo: user.bankInfo || null,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     }
@@ -151,6 +161,13 @@ export default class TeamController {
       'phone',
       'avatarUrl',
       'companyId',
+      'compensationType',
+      'baseSalary',
+      'sessionRate',
+      'commissionPercentage',
+      'paymentDay',
+      'pixKey',
+      'bankInfo',
     ])
 
     if (!data.fullName || !data.email || !data.password) {
@@ -224,6 +241,16 @@ export default class TeamController {
     user.phone = data.phone || null
     user.avatarUrl = data.avatarUrl || null
     user.active = true
+    user.compensationType = data.compensationType || null
+    user.baseSalary = data.baseSalary !== undefined && data.baseSalary !== null ? String(data.baseSalary) : null
+    user.sessionRate = data.sessionRate !== undefined && data.sessionRate !== null ? String(data.sessionRate) : null
+    user.commissionPercentage =
+      data.commissionPercentage !== undefined && data.commissionPercentage !== null
+        ? String(data.commissionPercentage)
+        : null
+    user.paymentDay = data.paymentDay ? Number(data.paymentDay) : null
+    user.pixKey = data.pixKey || null
+    user.bankInfo = data.bankInfo || null
 
     await user.save()
     return response.created(this.formatUser(user))
@@ -265,6 +292,13 @@ export default class TeamController {
       'phone',
       'avatarUrl',
       'active',
+      'compensationType',
+      'baseSalary',
+      'sessionRate',
+      'commissionPercentage',
+      'paymentDay',
+      'pixKey',
+      'bankInfo',
     ])
 
     if (data.email && data.email.toLowerCase().trim() !== user.email) {
@@ -338,6 +372,15 @@ export default class TeamController {
     if (data.phone !== undefined) user.phone = data.phone
     if (data.avatarUrl !== undefined) user.avatarUrl = data.avatarUrl
     if (data.active !== undefined) user.active = Boolean(data.active)
+
+    if (data.compensationType !== undefined) user.compensationType = data.compensationType || null
+    if (data.baseSalary !== undefined) user.baseSalary = data.baseSalary !== null ? String(data.baseSalary) : null
+    if (data.sessionRate !== undefined) user.sessionRate = data.sessionRate !== null ? String(data.sessionRate) : null
+    if (data.commissionPercentage !== undefined)
+      user.commissionPercentage = data.commissionPercentage !== null ? String(data.commissionPercentage) : null
+    if (data.paymentDay !== undefined) user.paymentDay = data.paymentDay ? Number(data.paymentDay) : null
+    if (data.pixKey !== undefined) user.pixKey = data.pixKey || null
+    if (data.bankInfo !== undefined) user.bankInfo = data.bankInfo || null
 
     // Only superadmin or clinic_admin can change roles
     if (data.role && (currentUser.role === 'superadmin' || currentUser.role === 'clinic_admin')) {

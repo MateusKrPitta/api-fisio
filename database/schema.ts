@@ -191,12 +191,14 @@ export class EvaluationSchema extends BaseModel {
 }
 
 export class FinancialRecordSchema extends BaseModel {
-  static $columns = ['amount', 'appointmentId', 'companyId', 'createdAt', 'date', 'id', 'paidAt', 'patientId', 'paymentMethod', 'status', 'title', 'type', 'updatedAt', 'userId'] as const
+  static $columns = ['amount', 'appointmentId', 'category', 'companyId', 'createdAt', 'date', 'id', 'paidAt', 'patientId', 'paymentMethod', 'recipientUserId', 'referenceMonth', 'status', 'title', 'type', 'updatedAt', 'userId'] as const
   $columns = FinancialRecordSchema.$columns
   @column()
   declare amount: string
   @column()
   declare appointmentId: number | null
+  @column()
+  declare category: string | null
   @column()
   declare companyId: number | null
   @column.dateTime({ autoCreate: true })
@@ -211,6 +213,10 @@ export class FinancialRecordSchema extends BaseModel {
   declare patientId: number | null
   @column()
   declare paymentMethod: string
+  @column()
+  declare recipientUserId: number | null
+  @column()
+  declare referenceMonth: string | null
   @column()
   declare status: string
   @column()
@@ -355,14 +361,22 @@ export class SavedClinicalReportSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['active', 'avatarUrl', 'companyId', 'cpfCnpj', 'createdAt', 'crefito', 'email', 'fullName', 'id', 'password', 'phone', 'role', 'updatedAt'] as const
+  static $columns = ['active', 'avatarUrl', 'bankInfo', 'baseSalary', 'commissionPercentage', 'companyId', 'compensationType', 'cpfCnpj', 'createdAt', 'crefito', 'email', 'fullName', 'id', 'password', 'paymentDay', 'phone', 'pixKey', 'role', 'sessionRate', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column()
   declare active: boolean
   @column()
   declare avatarUrl: string | null
   @column()
+  declare bankInfo: string | null
+  @column()
+  declare baseSalary: string | null
+  @column()
+  declare commissionPercentage: string | null
+  @column()
   declare companyId: number | null
+  @column()
+  declare compensationType: string | null
   @column()
   declare cpfCnpj: string | null
   @column.dateTime({ autoCreate: true })
@@ -378,9 +392,15 @@ export class UserSchema extends BaseModel {
   @column({ serializeAs: null })
   declare password: string
   @column()
+  declare paymentDay: number | null
+  @column()
   declare phone: string | null
   @column()
+  declare pixKey: string | null
+  @column()
   declare role: string
+  @column()
+  declare sessionRate: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

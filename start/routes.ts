@@ -173,8 +173,10 @@ router
         router.post('patients/:patientId/saved-reports', [AiReportsController, 'store'])
         router.delete('saved-reports/:id', [AiReportsController, 'destroy'])
 
-        // Financial Records
+        // Financial Records & Payroll (Prata & Ouro)
         router.get('financial-records', [FinancialRecordsController, 'index'])
+        router.get('financial-records/payroll/preview', [FinancialRecordsController, 'payrollPreview'])
+        router.post('financial-records/payroll/generate', [FinancialRecordsController, 'payrollGenerate'])
         router.post('financial-records', [FinancialRecordsController, 'store'])
         router.put('financial-records/:id', [FinancialRecordsController, 'update'])
         router.delete('financial-records/:id', [FinancialRecordsController, 'destroy'])

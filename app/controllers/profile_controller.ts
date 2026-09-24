@@ -34,6 +34,9 @@ export default class ProfileController {
             address: company.address,
             logoUrl: company.logoUrl,
             status: company.status,
+            plan: company.plan || 'bronze',
+            maxPhysios: company.maxPhysios,
+            maxSecretaries: company.maxSecretaries,
           }
         : null,
     })

@@ -176,9 +176,11 @@ export default class AppointmentsController {
       .where('appointments.id', params.id)
       .preload('user', (u) => u.select('id', 'full_name', 'email'))
       .preload('patient', (pQuery) => {
-        pQuery.preload('formRecords', (fQuery) => {
-          fQuery.select('id', 'patient_id', 'record_date')
-        })
+        pQuery
+          .preload('user', (u) => u.select('id', 'full_name', 'email'))
+          .preload('formRecords', (fQuery) => {
+            fQuery.select('id', 'patient_id', 'record_date')
+          })
       })
       .preload('template')
       .preload('financialRecord')
@@ -197,6 +199,16 @@ export default class AppointmentsController {
     const serialized = appointment.serialize()
     serialized.has_evolution = hasEvolution
     serialized.hasEvolution = hasEvolution
+
+    const physioName =
+      appointment.user?.fullName ||
+      (appointment.user as any)?.full_name ||
+      appointment.patient?.user?.fullName ||
+      (appointment.patient?.user as any)?.full_name ||
+      null
+
+    serialized.physioName = physioName
+    serialized.physio_name = physioName
 
     return response.ok(serialized)
   }

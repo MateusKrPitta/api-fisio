@@ -46,14 +46,23 @@ export default class FinancialRecord extends BaseModel {
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
-  @column.dateTime({ autoCreate: true, autoUpdate: true })
-  declare updatedAt: DateTime | null
+  @column()
+  declare category: string | null
+
+  @column()
+  declare recipientUserId: number | null
+
+  @column()
+  declare referenceMonth: string | null
 
   @belongsTo(() => Company)
   declare company: BelongsTo<typeof Company>
 
   @belongsTo(() => User)
   declare user: BelongsTo<typeof User>
+
+  @belongsTo(() => User, { foreignKey: 'recipientUserId' })
+  declare recipientUser: BelongsTo<typeof User>
 
   @belongsTo(() => Patient)
   declare patient: BelongsTo<typeof Patient>
