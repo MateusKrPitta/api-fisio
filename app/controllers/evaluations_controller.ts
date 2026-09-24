@@ -39,12 +39,12 @@ export default class EvaluationsController {
     }
 
     const payload = await request.validateUsing(createEvaluationValidator)
-    const evalDate = DateTime.fromISO(payload.date)
+    const evalDate = payload.date ? DateTime.fromISO(payload.date) : DateTime.now()
 
     const evaluation = await patient.related('evaluations').create({
-      date: evalDate,
-      scores: payload.scores,
-      overall: payload.overall,
+      date: evalDate.isValid ? evalDate : DateTime.now(),
+      scores: payload.scores || {},
+      overall: payload.overall ?? 0,
     })
 
     return response.created(evaluation)
