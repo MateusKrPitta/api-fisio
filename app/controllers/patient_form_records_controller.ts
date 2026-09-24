@@ -360,6 +360,23 @@ export default class PatientFormRecordsController {
       parsedAnswers = {}
     }
 
+    const companyId = (record as any).companyId || record.patient?.companyId || record.user?.companyId || null
+    let clinicData: any = null
+    if (companyId) {
+      try {
+        const Company = (await import('#models/company')).default
+        const comp = await Company.find(companyId)
+        if (comp) {
+          clinicData = {
+            id: comp.id,
+            name: comp.name,
+            logoUrl: comp.logoUrl || null,
+            phone: comp.phone || null,
+          }
+        }
+      } catch (e) {}
+    }
+
     return response.ok({
       id: record.id,
       recordDate: record.recordDate,
@@ -384,7 +401,9 @@ export default class PatientFormRecordsController {
         fullName: record.user.fullName,
         email: record.user.email,
         crefito: record.user.crefito,
+        avatarUrl: (record.user as any).avatarUrl || null,
       } : null,
+      clinic: clinicData,
       template: record.template ? {
         id: record.template.id,
         title: record.template.title,

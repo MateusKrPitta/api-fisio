@@ -20,8 +20,11 @@ router
   .group(() => {
     // Public evaluation preview & digital signature endpoints (no login required)
     const PatientFormRecordsController = () => import('#controllers/patient_form_records_controller')
+    const SatisfactionSurveysController = () => import('#controllers/satisfaction_surveys_controller')
     router.get('public/evaluations/:token', [PatientFormRecordsController, 'showPublic'])
     router.post('public/evaluations/:token/sign', [PatientFormRecordsController, 'signPublic']).use(publicSignatureLimiter)
+    router.get('public/satisfaction-surveys/:token', [SatisfactionSurveysController, 'showPublic'])
+    router.post('public/satisfaction-surveys/:token', [SatisfactionSurveysController, 'submitPublic']).use(publicSignatureLimiter)
 
     // Initial database seeding trigger endpoint (Protected: dev only or with secret key)
     router.get('system-init-seed', async ({ request, response }) => {
@@ -172,6 +175,11 @@ router
         router.get('patients/:patientId/saved-reports', [AiReportsController, 'index'])
         router.post('patients/:patientId/saved-reports', [AiReportsController, 'store'])
         router.delete('saved-reports/:id', [AiReportsController, 'destroy'])
+
+        // Satisfaction Surveys (NPS)
+        router.get('patients/:patientId/satisfaction-surveys', [SatisfactionSurveysController, 'index'])
+        router.post('patients/:patientId/satisfaction-surveys', [SatisfactionSurveysController, 'store'])
+        router.delete('satisfaction-surveys/:id', [SatisfactionSurveysController, 'destroy'])
 
         // Financial Records & Payroll (Prata & Ouro)
         router.get('financial-records', [FinancialRecordsController, 'index'])

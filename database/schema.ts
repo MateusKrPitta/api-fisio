@@ -335,6 +335,39 @@ export class RateLimitSchema extends BaseModel {
   declare points: number
 }
 
+export class SatisfactionSurveySchema extends BaseModel {
+  static $columns = ['answeredAt', 'companyId', 'createdAt', 'feedback', 'id', 'npsScore', 'patientId', 'recoveryRating', 'status', 'structureRating', 'therapistRating', 'token', 'updatedAt', 'userId'] as const
+  $columns = SatisfactionSurveySchema.$columns
+  @column.dateTime()
+  declare answeredAt: DateTime | null
+  @column()
+  declare companyId: number | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare feedback: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare npsScore: number | null
+  @column()
+  declare patientId: number
+  @column()
+  declare recoveryRating: number | null
+  @column()
+  declare status: string
+  @column()
+  declare structureRating: number | null
+  @column()
+  declare therapistRating: number | null
+  @column()
+  declare token: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: number | null
+}
+
 export class SavedClinicalReportSchema extends BaseModel {
   static $columns = ['companyId', 'createdAt', 'id', 'patientId', 'reportText', 'scaleKey', 'scaleTitle', 'tone', 'updatedAt', 'userId'] as const
   $columns = SavedClinicalReportSchema.$columns
