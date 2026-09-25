@@ -164,7 +164,7 @@ export class CustomModuleSchema extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
   @column()
-  declare name: string
+  declare name: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
@@ -243,7 +243,7 @@ export class FormTemplateSchema extends BaseModel {
   @column()
   declare moduleIds: string | null
   @column()
-  declare title: string
+  declare title: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
   @column()
