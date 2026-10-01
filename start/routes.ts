@@ -163,6 +163,7 @@ router
         // Patient Form Records
         router.get('patients/:patientId/form-records', [PatientFormRecordsController, 'index']).as('patient_form_records.index')
         router.get('form-records/:id', [PatientFormRecordsController, 'show']).as('form_records.show')
+        router.get('patients/:patientId/form-records/:id', [PatientFormRecordsController, 'show']).as('patient_form_records.show_nested')
         router.post('patients/:patientId/form-records', [PatientFormRecordsController, 'store']).as('patient_form_records.store')
         router.put('form-records/:id', [PatientFormRecordsController, 'update']).as('form_records.update')
         router.put('patients/:patientId/form-records/:id', [PatientFormRecordsController, 'update']).as('patient_form_records.update_nested')
@@ -172,6 +173,7 @@ router
         // AI Clinical Report Analysis & Saved Reports
         const AiReportsController = () => import('#controllers/ai_reports_controller')
         router.post('patients/:patientId/ai-report', [AiReportsController, 'generate'])
+        router.post('patients/:patientId/evolution-ai-report', [AiReportsController, 'generateEvolutionReport'])
         router.get('patients/:patientId/saved-reports', [AiReportsController, 'index'])
         router.post('patients/:patientId/saved-reports', [AiReportsController, 'store'])
         router.delete('saved-reports/:id', [AiReportsController, 'destroy'])

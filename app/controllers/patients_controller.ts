@@ -43,7 +43,7 @@ export default class PatientsController {
     const query = Patient.query()
       .select('id', 'name', 'cpf', 'phone', 'email', 'template_id', 'session_rate', 'user_id', 'company_id', 'created_at')
       .preload('template', (tQuery) => tQuery.select('id', 'title'))
-      .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email'))
+      .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email', 'crefito'))
 
     this.applyScope(query, user)
 

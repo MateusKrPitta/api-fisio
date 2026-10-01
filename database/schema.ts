@@ -384,7 +384,7 @@ export class SavedClinicalReportSchema extends BaseModel {
   @column()
   declare scaleKey: string
   @column()
-  declare scaleTitle: string
+  declare scaleTitle: string | null
   @column()
   declare tone: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })

@@ -38,7 +38,7 @@ export default class PatientFormRecordsController {
     const query = PatientFormRecord.query()
       .where('patient_id', params.patientId)
       .preload('template')
-      .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email'))
+      .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email', 'crefito'))
       .orderBy('record_date', 'desc')
       .orderBy('id', 'desc')
 
@@ -56,7 +56,69 @@ export default class PatientFormRecordsController {
 
     const records = await query
 
-    // Collect all module IDs across records
+    const isFull = request.input('full') === 'true'
+
+    if (!isFull) {
+      const summaryRecords = records.map((r) => {
+        let recModuleIds: number[] = []
+        if (r.template?.moduleIds) {
+          try {
+            recModuleIds = typeof r.template.moduleIds === 'string'
+              ? JSON.parse(r.template.moduleIds)
+              : r.template.moduleIds
+          } catch (e) {}
+        }
+
+        let imagesCount = 0
+        const rawImages: any = r.images
+        if (Array.isArray(rawImages)) {
+          imagesCount = rawImages.length
+        } else if (typeof rawImages === 'string' && rawImages.trim().length > 0) {
+          try {
+            const parsed = JSON.parse(rawImages)
+            if (Array.isArray(parsed)) imagesCount = parsed.length
+            else imagesCount = 1
+          } catch {
+            imagesCount = 1
+          }
+        }
+
+        return {
+          id: r.id,
+          patientId: r.patientId,
+          templateId: r.templateId,
+          userId: r.userId,
+          recordDate: r.recordDate,
+          signatureStatus: r.signatureStatus || 'pendente',
+          signatureToken: r.signatureToken,
+          signedAt: r.signedAt,
+          signedByName: r.signedByName,
+          signedByCpf: r.signedByCpf,
+          createdAt: r.createdAt,
+          updatedAt: r.updatedAt,
+          imagesCount,
+          hasNotes: !!r.notes,
+          user: r.user ? { id: r.user.id, fullName: r.user.fullName, email: r.user.email, crefito: r.user.crefito } : null,
+          template: r.template
+            ? {
+                id: r.template.id,
+                title: r.template.title,
+                description: r.template.description,
+                category: (r.template as any).category || 'Geral',
+                moduleIds: r.template.moduleIds,
+                modulesCount: (r.template.title && r.template.title.includes('+'))
+                  ? r.template.title.split('+').map((s: string) => s.trim()).filter(Boolean).length
+                  : (Array.isArray(recModuleIds) && recModuleIds.length > 0 ? recModuleIds.length : 1),
+              }
+            : null,
+          detailsLoaded: false,
+        }
+      })
+
+      return response.ok(summaryRecords)
+    }
+
+    // Full Mode (when ?full=true is requested, e.g. for complete AI report synthesis)
     const allModuleIds = new Set<number>()
     records.forEach((r) => {
       if (r.template?.moduleIds) {
@@ -89,10 +151,12 @@ export default class PatientFormRecordsController {
 
       return {
         ...r.toJSON(),
+        detailsLoaded: true,
         template: r.template
           ? {
               ...r.template.toJSON(),
               modules: recModules,
+              modulesCount: recModules.length,
             }
           : null,
       }
@@ -145,10 +209,12 @@ export default class PatientFormRecordsController {
 
     return response.ok({
       ...record.toJSON(),
+      detailsLoaded: true,
       template: record.template
         ? {
             ...record.template.toJSON(),
             modules: recModules,
+            modulesCount: recModules.length,
           }
         : null,
     })
