@@ -522,7 +522,7 @@ export default class FinancialRecordsController {
     const { allowed, plan } = await this.checkPlanAllowance(user)
     if (!allowed) {
       return response.forbidden({
-        error: `O Módulo de Folha de Pagamento & Repasses é exclusivo para os planos Prata e Ouro. Seu plano é ${plan.toUpperCase()}.`,
+        error: `O Módulo de Folha de Pagamento e Repasses é exclusivo para os planos Prata e Ouro. Seu plano é ${plan.toUpperCase()}.`,
       })
     }
 

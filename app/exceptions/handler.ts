@@ -27,8 +27,13 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       })
     }
 
-    if (err?.code === 'E_ROW_NOT_FOUND') {
+    if (
+      err?.code === 'E_ROW_NOT_FOUND' ||
+      err?.name === 'ModelNotFoundException' ||
+      err?.name === 'RowNotFoundException'
+    ) {
       return ctx.response.status(404).json({
+        error: 'O registro solicitado não foi encontrado no sistema.',
         message: 'O registro solicitado não foi encontrado no sistema.',
       })
     }
@@ -36,8 +41,17 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     if (err?.messages && Array.isArray(err.messages)) {
       const firstMessage = err.messages[0]?.message || 'Dados inválidos na requisição.'
       return ctx.response.status(422).json({
+        error: firstMessage,
         message: firstMessage,
         errors: err.messages,
+      })
+    }
+
+    if (err?.message && !app.inProduction) {
+      console.error('[Unhandled Exception]:', err)
+      return ctx.response.status(err?.status || 500).json({
+        error: err.message,
+        message: err.message,
       })
     }
 

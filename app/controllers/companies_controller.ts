@@ -14,7 +14,27 @@ export default class CompaniesController {
     }
 
     const companies = await Company.query()
-      .select('id', 'name', 'cnpj', 'crefito', 'email', 'phone', 'logo_url', 'status', 'plan', 'max_physios', 'max_secretaries', 'created_at', 'updated_at')
+      .select(
+        'id',
+        'name',
+        'cnpj',
+        'crefito',
+        'email',
+        'phone',
+        'logo_url',
+        'status',
+        'plan',
+        'max_physios',
+        'max_secretaries',
+        'subscription_status',
+        'trial_ends_at',
+        'due_day',
+        'monthly_price',
+        'next_billing_date',
+        'last_payment_date',
+        'created_at',
+        'updated_at'
+      )
       .withCount('users', (q) => q.as('users_count'))
       .withCount('patients', (q) => q.as('patients_count'))
       .orderBy('name', 'asc')
@@ -32,6 +52,12 @@ export default class CompaniesController {
         plan: c.plan || 'bronze',
         maxPhysios: c.maxPhysios,
         maxSecretaries: c.maxSecretaries,
+        subscriptionStatus: c.subscriptionStatus || 'trial',
+        trialEndsAt: c.trialEndsAt,
+        dueDay: c.dueDay || 10,
+        monthlyPrice: c.monthlyPrice ? Number(c.monthlyPrice) : 99.0,
+        nextBillingDate: c.nextBillingDate,
+        lastPaymentDate: c.lastPaymentDate,
         createdAt: c.createdAt,
         updatedAt: c.updatedAt,
         usersCount: Number(c.$extras.users_count || 0),
@@ -60,6 +86,7 @@ export default class CompaniesController {
     const company = await Company.query()
       .where('id', Number(params.id))
       .preload('users', (uQuery) => uQuery.orderBy('fullName', 'asc'))
+      .preload('subscriptionInvoices', (iQuery) => iQuery.orderBy('dueDate', 'desc').limit(12))
       .firstOrFail()
 
     return response.ok({
@@ -75,6 +102,12 @@ export default class CompaniesController {
       plan: company.plan || 'bronze',
       maxPhysios: company.maxPhysios,
       maxSecretaries: company.maxSecretaries,
+      subscriptionStatus: company.subscriptionStatus || 'trial',
+      trialEndsAt: company.trialEndsAt,
+      dueDay: company.dueDay || 10,
+      monthlyPrice: company.monthlyPrice ? Number(company.monthlyPrice) : 99.0,
+      nextBillingDate: company.nextBillingDate,
+      lastPaymentDate: company.lastPaymentDate,
       createdAt: company.createdAt,
       updatedAt: company.updatedAt,
       users: (company.users || []).map((u) => ({
@@ -89,6 +122,7 @@ export default class CompaniesController {
         active: u.active !== false,
         companyId: u.companyId,
       })),
+      subscriptionInvoices: company.subscriptionInvoices || [],
     })
   }
 
@@ -257,6 +291,11 @@ export default class CompaniesController {
       'plan',
       'maxPhysios',
       'maxSecretaries',
+      'subscriptionStatus',
+      'dueDay',
+      'monthlyPrice',
+      'trialEndsAt',
+      'nextBillingDate',
     ])
 
     if (currentUser.role === 'superadmin') {
@@ -279,6 +318,22 @@ export default class CompaniesController {
         if (data.maxSecretaries !== undefined) {
           company.maxSecretaries = data.maxSecretaries === null || data.maxSecretaries === '' ? null : Number(data.maxSecretaries)
         }
+      }
+
+      if (data.subscriptionStatus !== undefined) {
+        company.subscriptionStatus = data.subscriptionStatus
+      }
+      if (data.dueDay !== undefined) {
+        company.dueDay = data.dueDay === null || data.dueDay === '' ? 10 : Number(data.dueDay)
+      }
+      if (data.monthlyPrice !== undefined) {
+        company.monthlyPrice = data.monthlyPrice === null || data.monthlyPrice === '' ? 99.0 : Number(data.monthlyPrice)
+      }
+      if (data.trialEndsAt !== undefined) {
+        company.trialEndsAt = data.trialEndsAt
+      }
+      if (data.nextBillingDate !== undefined) {
+        company.nextBillingDate = data.nextBillingDate
       }
     }
 

@@ -52,4 +52,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   LIMITER_STORE: Env.schema.enum.optional(['database', 'memory'] as const),
+
+  // Mercado Pago
+  MP_ACCESS_TOKEN: Env.schema.string.optional(),
+  MP_PUBLIC_KEY: Env.schema.string.optional(),
 })

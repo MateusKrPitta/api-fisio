@@ -91,7 +91,7 @@ export class AuthAccessTokenSchema extends BaseModel {
 }
 
 export class CompanySchema extends BaseModel {
-  static $columns = ['address', 'cnpj', 'createdAt', 'crefito', 'email', 'id', 'logoUrl', 'maxPhysios', 'maxSecretaries', 'name', 'phone', 'plan', 'status', 'updatedAt'] as const
+  static $columns = ['address', 'cnpj', 'createdAt', 'crefito', 'dueDay', 'email', 'id', 'lastPaymentDate', 'logoUrl', 'maxPhysios', 'maxSecretaries', 'monthlyPrice', 'mpCustomerId', 'mpSubscriptionId', 'name', 'nextBillingDate', 'phone', 'plan', 'status', 'subscriptionStatus', 'trialEndsAt', 'updatedAt'] as const
   $columns = CompanySchema.$columns
   @column()
   declare address: string | null
@@ -102,9 +102,13 @@ export class CompanySchema extends BaseModel {
   @column()
   declare crefito: string | null
   @column()
+  declare dueDay: number | null
+  @column()
   declare email: string | null
   @column({ isPrimary: true })
   declare id: number
+  @column.dateTime()
+  declare lastPaymentDate: DateTime | null
   @column()
   declare logoUrl: string | null
   @column()
@@ -112,13 +116,25 @@ export class CompanySchema extends BaseModel {
   @column()
   declare maxSecretaries: number | null
   @column()
+  declare monthlyPrice: string | null
+  @column()
+  declare mpCustomerId: string | null
+  @column()
+  declare mpSubscriptionId: string | null
+  @column()
   declare name: string
+  @column.dateTime()
+  declare nextBillingDate: DateTime | null
   @column()
   declare phone: string | null
   @column()
   declare plan: string
   @column()
   declare status: string
+  @column()
+  declare subscriptionStatus: string
+  @column.dateTime()
+  declare trialEndsAt: DateTime | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }
@@ -391,6 +407,60 @@ export class SavedClinicalReportSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare userId: number
+}
+
+export class SubscriptionInvoiceSchema extends BaseModel {
+  static $columns = ['amount', 'companyId', 'createdAt', 'dueDate', 'id', 'mpPaymentId', 'mpPreferenceId', 'notes', 'paidAt', 'paymentMethod', 'pixQrCode', 'pixQrCodeBase64', 'status', 'ticketUrl', 'title', 'updatedAt'] as const
+  $columns = SubscriptionInvoiceSchema.$columns
+  @column()
+  declare amount: string
+  @column()
+  declare companyId: number
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare dueDate: DateTime
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare mpPaymentId: string | null
+  @column()
+  declare mpPreferenceId: string | null
+  @column()
+  declare notes: string | null
+  @column.dateTime()
+  declare paidAt: DateTime | null
+  @column()
+  declare paymentMethod: string | null
+  @column()
+  declare pixQrCode: string | null
+  @column()
+  declare pixQrCodeBase64: string | null
+  @column()
+  declare status: string
+  @column()
+  declare ticketUrl: string | null
+  @column()
+  declare title: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class SystemSettingSchema extends BaseModel {
+  static $columns = ['createdAt', 'description', 'id', 'key', 'updatedAt', 'value'] as const
+  $columns = SystemSettingSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare description: string | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare key: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare value: string | null
 }
 
 export class UserSchema extends BaseModel {

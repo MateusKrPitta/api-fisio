@@ -193,6 +193,8 @@ router
 
         const CompaniesController = () => import('#controllers/companies_controller')
         const TeamController = () => import('#controllers/team_controller')
+        const SubscriptionInvoicesController = () => import('#controllers/subscription_invoices_controller')
+        const SystemSettingsController = () => import('#controllers/system_settings_controller')
 
         // Companies Management (Super Admin & Clinic Admin)
         router.get('companies', [CompaniesController, 'index'])
@@ -208,7 +210,30 @@ router
         router.post('team', [TeamController, 'store'])
         router.put('team/:id', [TeamController, 'update'])
         router.delete('team/:id', [TeamController, 'destroy'])
+
+        // SaaS Subscriptions & Invoices (Super Admin & Clinic)
+        router.get('subscription-invoices/summary', [SubscriptionInvoicesController, 'summary'])
+        router.post('subscription-invoices/batch-generate', [SubscriptionInvoicesController, 'generateMonthlyBatch'])
+        router.get('subscription-invoices', [SubscriptionInvoicesController, 'index'])
+        router.post('subscription-invoices', [SubscriptionInvoicesController, 'store'])
+        router.post('subscription-invoices/:id/pix', [SubscriptionInvoicesController, 'generatePix'])
+        router.post('subscription-invoices/:id/checkout', [SubscriptionInvoicesController, 'generateCheckout'])
+        router.post('subscription-invoices/:id/mark-as-paid', [SubscriptionInvoicesController, 'markAsPaid'])
+        router.put('subscription-invoices/:id/status', [SubscriptionInvoicesController, 'updateStatus'])
+        router.put('subscription-invoices/:id', [SubscriptionInvoicesController, 'update'])
+        router.delete('subscription-invoices/:id', [SubscriptionInvoicesController, 'destroy'])
+
+        // SuperAdmin System Settings & Mercado Pago API Keys
+        router.get('system-settings', [SystemSettingsController, 'index'])
+        router.post('system-settings', [SystemSettingsController, 'update'])
+        router.post('system-settings/test-mercadopago', [SystemSettingsController, 'testConnection'])
       })
       .use(middleware.auth())
+
+    // Public Mercado Pago Webhook (no auth token required)
+    const MercadoPagoWebhooksController = () => import('#controllers/mercadopago_webhooks_controller')
+    router.post('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).as('webhooks.mercadopago.post')
+    router.get('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).as('webhooks.mercadopago.get')
   })
   .prefix('/api/v1')
+

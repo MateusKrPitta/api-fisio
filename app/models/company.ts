@@ -5,6 +5,7 @@ import User from '#models/user'
 import Patient from '#models/patient'
 import Appointment from '#models/appointment'
 import FinancialRecord from '#models/financial_record'
+import SubscriptionInvoice from '#models/subscription_invoice'
 
 export default class Company extends BaseModel {
   @column({ isPrimary: true })
@@ -43,6 +44,30 @@ export default class Company extends BaseModel {
   @column()
   declare maxSecretaries: number | null
 
+  @column()
+  declare subscriptionStatus: 'trial' | 'active' | 'past_due' | 'suspended' | 'canceled' | 'exempt'
+
+  @column.dateTime()
+  declare trialEndsAt: DateTime | null
+
+  @column()
+  declare dueDay: number | null
+
+  @column()
+  declare monthlyPrice: number | null
+
+  @column.dateTime()
+  declare nextBillingDate: DateTime | null
+
+  @column.dateTime()
+  declare lastPaymentDate: DateTime | null
+
+  @column()
+  declare mpCustomerId: string | null
+
+  @column()
+  declare mpSubscriptionId: string | null
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -60,4 +85,8 @@ export default class Company extends BaseModel {
 
   @hasMany(() => FinancialRecord)
   declare financialRecords: HasMany<typeof FinancialRecord>
+
+  @hasMany(() => SubscriptionInvoice)
+  declare subscriptionInvoices: HasMany<typeof SubscriptionInvoice>
 }
+
