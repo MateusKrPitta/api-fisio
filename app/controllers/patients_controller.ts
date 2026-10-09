@@ -37,8 +37,9 @@ export default class PatientsController {
   async index({ auth, request }: HttpContext) {
     const user = auth.getUserOrFail()
     const search = request.input('q')
-    const page = request.input('page', 1)
-    const limit = request.input('limit', 20)
+    const page = Math.max(1, Number(request.input('page', 1)) || 1)
+    const rawLimit = Number(request.input('limit', 20)) || 20
+    const limit = Math.min(Math.max(1, rawLimit), 100) // Teto de segurança para não pesar a memória
 
     const query = Patient.query()
       .select('id', 'name', 'cpf', 'phone', 'email', 'template_id', 'session_rate', 'user_id', 'company_id', 'created_at')
@@ -67,9 +68,12 @@ export default class PatientsController {
       .where('id', params.id)
       .preload('template')
       .preload('user', (uQuery) => uQuery.select('id', 'full_name', 'email'))
-      .preload('appointments', (aQuery) => aQuery.orderBy('date', 'asc').orderBy('start_time', 'asc'))
+      .preload('appointments', (aQuery) =>
+        aQuery.orderBy('date', 'desc').orderBy('start_time', 'desc').limit(50)
+      )
 
     this.applyScope(query, user)
+
 
     const patient = await query.first()
 

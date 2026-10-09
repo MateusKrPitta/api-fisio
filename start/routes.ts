@@ -10,7 +10,9 @@
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
-import { loginLimiter, signupLimiter, publicSignatureLimiter } from '#start/limiter'
+import { loginLimiter, signupLimiter, publicSignatureLimiter, aiReportLimiter, webhookLimiter } from '#start/limiter'
+
+
 
 router.get('/', () => {
   return { hello: 'world' }
@@ -26,17 +28,22 @@ router
     router.get('public/satisfaction-surveys/:token', [SatisfactionSurveysController, 'showPublic'])
     router.post('public/satisfaction-surveys/:token', [SatisfactionSurveysController, 'submitPublic']).use(publicSignatureLimiter)
 
-    // Initial database seeding trigger endpoint (Protected: dev only or with secret key)
+    // Initial database seeding trigger endpoint (Protected: dev localhost only or with valid secret key)
     router.get('system-init-seed', async ({ request, response }) => {
-      const isDev = process.env.NODE_ENV !== 'production'
+      const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV
+      const isLocalhost = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(request.ip())
       const secretKey = process.env.SEED_SECRET_KEY
       const providedKey = request.header('x-seed-key') || request.input('key')
 
-      if (!isDev && (!secretKey || providedKey !== secretKey)) {
+      const authorizedWithKey = Boolean(secretKey && providedKey === secretKey)
+      const authorizedInLocalDev = Boolean(isDev && isLocalhost)
+
+      if (!authorizedWithKey && !authorizedInLocalDev) {
         return response.status(403).json({
-          error: 'Acesso negado. A rota de inicialização do sistema está protegida.',
+          error: 'Acesso negado. A rota de inicialização do sistema é restrita a ambiente local de desenvolvimento ou requer SEED_SECRET_KEY válida.',
         })
       }
+
 
       const User = (await import('#models/user')).default
       const Company = (await import('#models/company')).default
@@ -172,9 +179,10 @@ router
 
         // AI Clinical Report Analysis & Saved Reports
         const AiReportsController = () => import('#controllers/ai_reports_controller')
-        router.post('patients/:patientId/ai-report', [AiReportsController, 'generate'])
-        router.post('patients/:patientId/evolution-ai-report', [AiReportsController, 'generateEvolutionReport'])
+        router.post('patients/:patientId/ai-report', [AiReportsController, 'generate']).use(aiReportLimiter)
+        router.post('patients/:patientId/evolution-ai-report', [AiReportsController, 'generateEvolutionReport']).use(aiReportLimiter)
         router.get('patients/:patientId/saved-reports', [AiReportsController, 'index'])
+
         router.post('patients/:patientId/saved-reports', [AiReportsController, 'store'])
         router.delete('saved-reports/:id', [AiReportsController, 'destroy'])
 
@@ -230,10 +238,11 @@ router
       })
       .use(middleware.auth())
 
-    // Public Mercado Pago Webhook (no auth token required)
+    // Public Mercado Pago Webhook (no auth token required, rate limited)
     const MercadoPagoWebhooksController = () => import('#controllers/mercadopago_webhooks_controller')
-    router.post('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).as('webhooks.mercadopago.post')
-    router.get('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).as('webhooks.mercadopago.get')
+    router.post('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).use(webhookLimiter).as('webhooks.mercadopago.post')
+    router.get('webhooks/mercadopago', [MercadoPagoWebhooksController, 'handleWebhook']).use(webhookLimiter).as('webhooks.mercadopago.get')
+
   })
   .prefix('/api/v1')
 

@@ -174,10 +174,20 @@ export default class TeamController {
       return response.badRequest({ message: 'Nome, e-mail e senha são obrigatórios.' })
     }
 
+    const targetRole = data.role || 'physiotherapist'
+    const allowedRoles = currentUser.role === 'superadmin'
+      ? ['superadmin', 'clinic_admin', 'physiotherapist', 'secretary']
+      : ['clinic_admin', 'physiotherapist', 'secretary']
+
+    if (!allowedRoles.includes(targetRole)) {
+      return response.badRequest({ message: 'Perfil (role) inválido ou permissão insuficiente.' })
+    }
+
     const existing = await User.findBy('email', data.email.toLowerCase().trim())
     if (existing) {
       return response.badRequest({ message: `O e-mail ${data.email} já está em uso.` })
     }
+
 
     const targetCompanyId =
       currentUser.role === 'superadmin' && data.companyId
@@ -384,8 +394,19 @@ export default class TeamController {
 
     // Only superadmin or clinic_admin can change roles
     if (data.role && (currentUser.role === 'superadmin' || currentUser.role === 'clinic_admin')) {
+      if (data.role === 'superadmin' && currentUser.role !== 'superadmin') {
+        return response.forbidden({ message: 'Apenas Super Administradores podem conceder o perfil superadmin.' })
+      }
+      const allowedRoles = currentUser.role === 'superadmin'
+        ? ['superadmin', 'clinic_admin', 'physiotherapist', 'secretary']
+        : ['clinic_admin', 'physiotherapist', 'secretary']
+
+      if (!allowedRoles.includes(data.role)) {
+        return response.badRequest({ message: 'Perfil (role) inválido ou permissão insuficiente.' })
+      }
       user.role = data.role
     }
+
 
     await user.save()
     return response.ok(this.formatUser(user))

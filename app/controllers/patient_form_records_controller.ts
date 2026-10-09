@@ -505,10 +505,16 @@ export default class PatientFormRecordsController {
     ])
 
     if (!signatureImage || typeof signatureImage !== 'string' || !signatureImage.startsWith('data:image')) {
-      return response.badRequest({ error: 'Imagem da assinatura é obrigatória.' })
+      return response.badRequest({ error: 'Imagem da assinatura é obrigatória e deve ser um formato de imagem válido.' })
+    }
+
+    // Proteção contra payload excessivo e consumo de memória (Máximo 500KB)
+    if (signatureImage.length > 500 * 1024) {
+      return response.badRequest({ error: 'A imagem da assinatura excede o tamanho máximo permitido (500KB).' })
     }
 
     record.signatureImage = signatureImage
+
     record.signatureStatus = 'assinado'
     record.signedAt = DateTime.now()
     record.signedByName = signedByName?.trim() || record.patient?.name || 'Paciente'

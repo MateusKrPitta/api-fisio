@@ -31,3 +31,12 @@ export const whatsappLimiter = limiter.define('whatsapp', (ctx) => {
 export const globalLimiter = limiter.define('global', (ctx) => {
   return limiter.allowRequests(100).every('1 minute').usingKey(ctx.request.ip())
 })
+
+export const aiReportLimiter = limiter.define('ai_report', (ctx) => {
+  const key = ctx.auth?.user ? `user_${ctx.auth.user.id}` : ctx.request.ip()
+  return limiter.allowRequests(15).every('1 minute').usingKey(key)
+})
+
+export const webhookLimiter = limiter.define('webhook', (ctx) => {
+  return limiter.allowRequests(60).every('1 minute').usingKey(ctx.request.ip())
+})

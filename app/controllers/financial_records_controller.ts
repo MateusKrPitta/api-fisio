@@ -140,11 +140,15 @@ export default class FinancialRecordsController {
   async index({ auth, request }: HttpContext) {
     const user = auth.getUserOrFail()
 
-    // Auto-sincronizar atendimentos existentes que ainda não possuem lançamento financeiro
+    // Auto-sincronizar atendimentos existentes em micro-lotes para não onerar o banco
     try {
-      const unlinkedQuery = Appointment.query().whereDoesntHave('financialRecord', () => {}).preload('patient')
+      const unlinkedQuery = Appointment.query()
+        .whereDoesntHave('financialRecord', () => {})
+        .preload('patient')
+        .limit(20)
       this.applyScope(unlinkedQuery, user)
       const unlinkedAppointments = await unlinkedQuery
+
 
       if (unlinkedAppointments.length > 0) {
         const toInsert: any[] = []
@@ -266,7 +270,9 @@ export default class FinancialRecordsController {
       )
 
     const page = Math.max(1, Number(request.input('page', 1)) || 1)
-    const limit = Math.max(1, Number(request.input('limit', 10)) || 10)
+    const rawLimit = Number(request.input('limit', 10)) || 10
+    const limit = Math.min(Math.max(1, rawLimit), 100)
+
 
     const paginatedRecordsData = await query
       .orderBy('created_at', 'desc')

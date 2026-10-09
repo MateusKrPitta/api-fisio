@@ -119,7 +119,9 @@ export default class AppointmentsController {
     const startDate = request.input('start_date')
     const endDate = request.input('end_date')
     const filterUserId = request.input('userId')
-    const limit = request.input('limit', 1000) // Default limit
+    const rawLimit = Number(request.input('limit', 500)) || 500
+    const limit = Math.min(Math.max(1, rawLimit), 1000) // Teto máximo de segurança contra OOM
+
 
     const query = Appointment.query()
       .leftJoin('patients', 'appointments.patient_id', 'patients.id')
@@ -146,8 +148,9 @@ export default class AppointmentsController {
       query.where('date', dateStr)
     }
 
-    const page = request.input('page', 1)
+    const page = Math.max(1, Number(request.input('page', 1)) || 1)
     const appointmentsData = await query.orderBy('date', 'asc').orderBy('start_time', 'asc').paginate(page, limit)
+
     
     const mapped = appointmentsData.all().map(app => {
       const serialized = app.serialize()
