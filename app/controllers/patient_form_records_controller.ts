@@ -284,7 +284,32 @@ export default class PatientFormRecordsController {
       console.error('Erro ao sincronizar evolução com agendamento:', e)
     }
 
-    return response.created(record)
+    let recModules: any[] = []
+    if (record.template?.moduleIds) {
+      try {
+        const moduleIds: number[] = typeof record.template.moduleIds === 'string'
+          ? JSON.parse(record.template.moduleIds)
+          : record.template.moduleIds
+        if (Array.isArray(moduleIds) && moduleIds.length > 0) {
+          const CustomModule = (await import('#models/custom_module')).default
+          recModules = await CustomModule.query()
+            .whereIn('id', moduleIds)
+            .preload('fields', (q) => q.orderBy('sort_order', 'asc'))
+        }
+      } catch (e) {}
+    }
+
+    return response.created({
+      ...record.toJSON(),
+      detailsLoaded: true,
+      template: record.template
+        ? {
+            ...record.template.toJSON(),
+            modules: recModules,
+            modulesCount: recModules.length,
+          }
+        : null,
+    })
   }
 
   /**
